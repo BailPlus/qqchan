@@ -79,6 +79,9 @@ async def send_msg(bot: Bot, msg: str, id: str):
     target = Target.get_target_by_id(id)
     match target.type:
         case TargetType.GROUP:
+            if not await utils.check_group_admin(bot, target.target_id, target.registrant):
+                target.delete()
+                raise NotGroupAdminError
             await bot.send_group_msg(
                 group_id=target.target_id,
                 message=Message(MessageSegment.text(msg))

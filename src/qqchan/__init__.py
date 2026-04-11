@@ -62,9 +62,10 @@ async def _(e: PrivateMessageEvent, arg: Message = CommandArg()):
     else:
         targets = await service.handle_list_private(e.user_id)
     
-    if not targets:
+    targets = '\n'.join(targets)
+    if not targets.strip():
         await list_cmd.finish(MessageSegment.text('你还没有注册'))
-    await list_cmd.finish(MessageSegment.text('\n'.join(targets)))
+    await list_cmd.finish(MessageSegment.text(targets))
 
 
 revoke_cmd = on_command('revoke')
@@ -102,5 +103,7 @@ async def _(msg: str, id: str):
         await service.send_msg(bot, msg, id)
     except KeyError:
         return '无此id'
+    except NotGroupAdminError:
+        return '你不是管理员，已吊销id'
     else:
         return '发送成功'
