@@ -397,7 +397,7 @@ wheels = [
 
 [[package]]
 name = "qqchan"
-version = "1.0a4"
+version = "1.0a5"
 source = { editable = "." }
 dependencies = [
     { name = "nonebot-adapter-onebot" },

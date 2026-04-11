@@ -84,7 +84,12 @@ async def send_msg(bot: Bot, msg: str, id: str):
                 raise NotGroupAdminError
             await bot.send_group_msg(
                 group_id=target.target_id,
-                message=Message(MessageSegment.text(msg))
+                message=Message(
+                    MessageSegment.text(msg) +
+                    MessageSegment.text("\n来自") +
+                    MessageSegment.at(target.registrant) +
+                    MessageSegment.text("的推送")
+                )
             )
         case TargetType.PRIVATE:
             await bot.send_msg(
