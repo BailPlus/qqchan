@@ -1,0 +1,2 @@
+class NotGroupAdminError(Exception):
+    pass
