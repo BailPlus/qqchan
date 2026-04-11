@@ -1,4 +1,5 @@
 from typing import Iterable
+from collections import defaultdict
 from nonebot.params import CommandArg
 from nonebot.adapters.onebot.v11 import Bot
 from nonebot.adapters.onebot.v11.message import MessageSegment, Message
@@ -45,9 +46,18 @@ async def handle_list_group(group_id: int, user_id: int) -> Iterable[str]:
 
 
 async def handle_list_user_all(user_id: int) -> Iterable[str]:
-    targets = Target.get_targets_by_registrant(user_id)
-    return (target.id for target in targets)
-
+    target_objs = Target.get_targets_by_registrant(user_id)
+    target_dict: dict[str | int, list[str]] = defaultdict(list)
+    for t in target_objs:
+        if t.type == TargetType.PRIVATE:
+            target_dict['private'].append(t.id)
+        else:
+            target_dict[t.target_id].append(t.id)
+    target_lst = [
+        f'{target}:\n- ' + '\n- '.join(target_dict[target]) + '\n'
+        for target in target_dict
+    ]
+    return target_lst
 
 async def handle_revoke_private(user_id: int, id: str):
     target = Target.get_target_by_id(id)
@@ -84,12 +94,10 @@ async def send_msg(bot: Bot, msg: str, id: str):
                 raise NotGroupAdminError
             await bot.send_group_msg(
                 group_id=target.target_id,
-                message=Message(
-                    MessageSegment.text(msg) +
+                message=MessageSegment.text(msg) +
                     MessageSegment.text("\n来自") +
                     MessageSegment.at(target.registrant) +
                     MessageSegment.text("的推送")
-                )
             )
         case TargetType.PRIVATE:
             await bot.send_msg(
