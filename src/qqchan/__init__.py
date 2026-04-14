@@ -3,22 +3,32 @@ from nonebot import get_bot, get_app, on_command
 from nonebot.params import CommandArg
 from nonebot.adapters.onebot.v11 import Bot
 from nonebot.adapters.onebot.v11.message import MessageSegment, Message
-from nonebot.adapters.onebot.v11.event import GroupMessageEvent, PrivateMessageEvent
+from nonebot.adapters.onebot.v11.event import PrivateMessageEvent
 from fastapi import FastAPI
 
-from qqchan.db import Target
 from qqchan.config import Config
-from qqchan.utils import check_group_admin
 from qqchan.exceptions import *
 from qqchan import service
 
 __plugin_meta__ = PluginMetadata(
     name="qqchan",
     description="",
-    usage="",
+    usage="""/register：为当前用户注册，会返回一个id
+/register <群号>：为指定群聊注册（必须是管理员）
+/list：列出当前用户的所有id
+/list <群号>：列出当前用户在指定群聊的所有id
+/list all：列出当前用户的所有id，以及当前用户注册的所有群聊id
+/revoke <id>：注销指定id（当前用户或当前用户注册的群聊）
+/revoke me：注销当前用户的所有id
+/revoke all：注销当前用户的所有id，以及当前用户注册的所有群聊id
+
+拿到id之后，访问
+http://10.16.5.11:3002/send?id=你得到的id&msg=要发送的消息
+即可向指定目标推送消息""",
     config=Config,
 )
 app: FastAPI = get_app()
+assert isinstance(app, FastAPI), '不支持的驱动器'
 
 
 register_cmd = on_command('register')

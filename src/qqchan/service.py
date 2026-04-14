@@ -1,9 +1,7 @@
 from typing import Iterable
 from collections import defaultdict
-from nonebot.params import CommandArg
 from nonebot.adapters.onebot.v11 import Bot
 from nonebot.adapters.onebot.v11.message import MessageSegment, Message
-from nonebot.adapters.onebot.v11.event import GroupMessageEvent, PrivateMessageEvent
 import uuid
 
 from qqchan import utils
@@ -47,7 +45,7 @@ async def handle_list_group(group_id: int, user_id: int) -> Iterable[str]:
 
 async def handle_list_user_all(user_id: int) -> Iterable[str]:
     target_objs = Target.get_targets_by_registrant(user_id)
-    target_dict: dict[str | int, list[str]] = defaultdict(list)
+    target_dict: dict[str | int, list[str]] = defaultdict(list) # type: ignore
     for t in target_objs:
         if t.type == TargetType.PRIVATE:
             target_dict['private'].append(t.id)
