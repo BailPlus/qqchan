@@ -1,5 +1,5 @@
 from nonebot.plugin import PluginMetadata
-from nonebot import get_app, on_command
+from nonebot import get_bot, get_app, on_command
 from nonebot.params import CommandArg
 from nonebot.adapters.onebot.v11 import Bot
 from nonebot.adapters.onebot.v11.message import MessageSegment, Message
@@ -105,7 +105,8 @@ async def _(e: PrivateMessageEvent, arg: Message = CommandArg()):
 
 @app.get('/qqchan/send')
 @app.post('/qqchan/send')
-async def _(bot: Bot, id: str, req: Request, msg: str | None = None):
+async def _(id: str, req: Request, msg: str | None = None):
+    assert isinstance(bot := get_bot(), Bot), '不支持的adapter'
     if not msg:
         if not (body := await req.body()):
             return {"success": False, 'msg': '请提供消息内容'}
