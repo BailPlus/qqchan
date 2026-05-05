@@ -6,7 +6,7 @@ import uuid
 
 from qqchan import utils
 from qqchan.db import Target, TargetType
-from qqchan.exceptions import *
+from qqchan.exc import NotGroupAdminError
 
 
 async def handle_register_private(user_id: int) -> str:

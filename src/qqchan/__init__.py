@@ -1,18 +1,19 @@
 from nonebot.plugin import PluginMetadata
-from nonebot import get_bot, get_app, on_command
+from nonebot import get_app, on_command
 from nonebot.params import CommandArg
 from nonebot.adapters.onebot.v11 import Bot
 from nonebot.adapters.onebot.v11.message import MessageSegment, Message
 from nonebot.adapters.onebot.v11.event import PrivateMessageEvent
 from fastapi import FastAPI
+from fastapi.requests import Request
 
 from qqchan.config import Config
-from qqchan.exceptions import *
+from qqchan.exc import NotGroupAdminError
 from qqchan import service
 
 __plugin_meta__ = PluginMetadata(
     name="qqchan",
-    description="",
+    description="QQ酱，一个运行在Onebot11上的、类似于Server酱的消息推送服务",
     usage="""/register：为当前用户注册，会返回一个id
 /register <群号>：为指定群聊注册（必须是管理员）
 /list：列出当前用户的所有id
@@ -21,14 +22,10 @@ __plugin_meta__ = PluginMetadata(
 /revoke <id>：注销指定id（当前用户或当前用户注册的群聊）
 /revoke me：注销当前用户的所有id
 /revoke all：注销当前用户的所有id，以及当前用户注册的所有群聊id
-
-拿到id之后，访问
-http://10.16.5.11:3002/send?id=你得到的id&msg=要发送的消息
-即可向指定目标推送消息""",
+""",
     config=Config,
 )
-app: FastAPI = get_app()
-assert isinstance(app, FastAPI), '不支持的驱动器'
+assert isinstance(app := get_app(), FastAPI), '不支持的驱动器'
 
 
 register_cmd = on_command('register')
@@ -106,14 +103,21 @@ async def _(e: PrivateMessageEvent, arg: Message = CommandArg()):
     await revoke_cmd.finish('删除成功')
 
 
-@app.get('/send')
-async def _(msg: str, id: str):
-    assert isinstance(bot := get_bot(), Bot)
+@app.get('/qqchan/send')
+@app.post('/qqchan/send')
+async def _(bot: Bot, id: str, req: Request, msg: str | None = None):
+    if not msg:
+        if not (body := await req.body()):
+            return {"success": False, 'msg': '请提供消息内容'}
+        try:
+            msg = body.decode('utf-8')
+        except Exception:
+            return {"success": False, "msg": '该消息无法被UTF-8解码'}
     try:
         await service.send_msg(bot, msg, id)
     except KeyError:
-        return '无此id'
+        return {"success": False, "msg": '无此id'}
     except NotGroupAdminError:
-        return '你不是管理员，已吊销id'
+        return {"success": False, "msg": '你不是管理员，已吊销id'}
     else:
-        return '发送成功'
+        return {"success": True, "msg": '发送成功'}
